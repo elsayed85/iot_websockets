@@ -2,11 +2,14 @@
 
 namespace App\Exceptions;
 
+use App\Exceptions\Traits\ExceptionHandlerTrait;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
+    use ExceptionHandlerTrait;
     /**
      * A list of the exception types that are not reported.
      *
@@ -35,7 +38,10 @@ class Handler extends ExceptionHandler
     public function register()
     {
         $this->reportable(function (Throwable $e) {
-            //
+            if (request()->is("api/*")) {
+                request()->headers->set('Accept', 'application/json', true);
+                $this->handelException($e);
+            }
         });
     }
 }

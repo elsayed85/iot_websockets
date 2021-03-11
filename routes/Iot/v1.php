@@ -12,5 +12,5 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [LoginController::class, "login"])->name('login');
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::post('send-data', [DataController::class  , "send"])->name('data.send');
+    Route::post('send', [DataController::class  , "send"])->name('data.send');
 });

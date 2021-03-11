@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\SendPayloadRequest;
 use App\Models\Device;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 
 class DataController extends Controller
 {

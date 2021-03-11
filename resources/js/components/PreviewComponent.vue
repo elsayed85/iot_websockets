@@ -1,13 +1,13 @@
 <template>
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <input class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="enter device public key" :type="passwordFieldType" v-model="public_key" />
+        <div class="col-md-12">
+            <div class="form-group">
+                <input class="form-control" placeholder="enter device public key" :type="passwordFieldType" v-model="public_key" />
 
                 <br>
 
-                <input class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="enter device private key" :type="passwordFieldType" v-model="private_key" />
+                <input class="form-control" placeholder="enter device private key" :type="passwordFieldType" v-model="private_key"/>
 
                 <br>
 
@@ -18,12 +18,9 @@
                 <br />
                 <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
                     <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
-                        <table class="min-w-full leading-normal">
+                        <table class="min-w-full leading-normal socket_table">
                             <thead>
                                 <tr>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        ID
-                                    </th>
                                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Device ID
                                     </th>
@@ -36,15 +33,12 @@
                                 </tr>
                             </thead>
                             <tbody id="device_data">
-                                <tr v-for="(data, index) in socket_data" :key="data.id">
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                        {{ index + 1 }}
-                                    </td>
+                                <tr v-for="(data) in socket_data.slice().reverse()" :key="data.id">
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
                                         {{ data.device_id }}
                                     </td>
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                        {{ data.payload }}
+                                          <tree-view :data="data.payload" :options="{maxDepth: 10}"></tree-view>
                                     </td>
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
                                         {{ data.created_at }}
@@ -57,31 +51,66 @@
             </div>
         </div>
     </div>
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <Lightbulb :isOn="light_is_on"/>
+            <div>
+                <RockerSwitch :size="0.9" :value="light_is_on" @change="isOn => (light_is_on = isOn)"/>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <vue-thermometer
+                :value="temperature_value"
+                :min="-20"
+                :max="25"
+            />
+        </div>
+        <div class="col-md-4">
+            <heart
+                :bpm_value="bpm_value"
+                :heart_stop="heart_stop"
+            />
+        </div>
+    </div>
 </div>
 </template>
-
-<script>
-import Echo from "laravel-echo";
-window.Pusher = require("pusher-js");
-const Toast = Swal.mixin({
-    toast: true,
-    position: 'bottom-end',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
-        toast.addEventListener('mouseleave', Swal.resumeTimer)
+<style >
+    .socket_table{
+        max-height: 440px;
+        overflow: auto;
+        display: inline-block;
     }
-})
+</style>
+<script>
+import TreeView from "vue-json-tree-view";
+import Notifications from 'vue-notification'
+Vue.use(Notifications)
+Vue.use(TreeView)
+import Lightbulb from "./Lightbulb";
+import heart from "./heart";
+import RockerSwitch from "vue-rocker-switch";
+import "vue-rocker-switch/dist/vue-rocker-switch.css";
+import VueThermometer from 'vuejs-thermometer'
+import Echo from "laravel-echo";
+import Heart from './heart.vue';
+window.Pusher = require("pusher-js");
+
 export default {
+    components: {
+    RockerSwitch,
+    Lightbulb,
+    Heart
+    },
     data() {
         return {
+            light_is_on: false,
+            bpm_value : 0,
+            heart_stop : true,
+            temperature_value : 0,
             socket_data: [],
             device_token: null,
             device_id: null,
             authorization_state: false,
-            device_id: null,
             public_key: "",
             private_key: "",
             passwordFieldType: 'password',
@@ -89,6 +118,11 @@ export default {
     },
     watch: {
         //
+    },
+    computed: {
+        socket_data: function() {
+            return this.items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        }
     },
     methods: {
         socketConnect: function () {
@@ -107,12 +141,6 @@ export default {
                 showConfirmButton: false,
                 timer: 1500,
                 text: message
-            })
-        },
-        notification: function (message) {
-            Toast.fire({
-                type: 'success',
-                title: message
             })
         },
         authorize: function () {
@@ -169,14 +197,44 @@ export default {
                         .listen(
                             ".send_data_event",
                             (e) => {
-                                this.notification("device #" + this.device_id)
+                                Vue.notify({
+                                    group: 'foretretytuytiuo',
+                                    clean: true,
+                                    title: "new message!!",
+                                    text: "device #" + this.device_id
+                                });
                                 this.socket_data.push(e);
+                                this.handelResposne(e)
                             }
                         );
                 }).catch((error) => {
                     this.msg("error", "Failed To Connect")
                 });
         },
+        handelResposne : function(e){
+            this.handelBulb(e)
+            this.handelTemprature(e)
+            this.handelHeartBeat(e)
+        },
+        handelBulb : function(data){
+            if(this.socketPayloadContainsKey(data.payload , "light_is_on")){
+                this.light_is_on = data.payload.light_is_on;
+            }
+        },
+        handelTemprature : function(data){
+            if(this.socketPayloadContainsKey(data.payload , "temperature_value")){
+                this.temperature_value = data.payload.temperature_value;
+            }
+        },
+        handelHeartBeat : function(data){
+            if(this.socketPayloadContainsKey(data.payload , "bpm_value")){
+                this.bpm_value = data.payload.bpm_value;
+                this.bpm_value == 0 ? this.heart_stop = true : this.heart_stop = false;
+            }
+        },
+        socketPayloadContainsKey(payload,key) {
+            return Object.keys(payload).includes(key);
+        }
     },
     created() {
         //
