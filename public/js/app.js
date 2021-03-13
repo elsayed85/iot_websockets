@@ -1980,6 +1980,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 
 
@@ -2027,7 +2029,7 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
       socket_data: [],
       device_token: null,
       device_id: null,
-      authorization_state: false,
+      authorized: false,
       public_key: "",
       private_key: "",
       passwordFieldType: 'password'
@@ -2110,11 +2112,11 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
 
                     _this.msg("success", "Connected");
 
-                    _this.authorization_state = true;
+                    _this.authorized = true;
                     callback(false, response.data);
                   })["catch"](function (error) {
                     console.log(error);
-                    _this.authorization_state = false;
+                    _this.authorized = false;
 
                     _this.msg("error", "Failed To Connect");
 
@@ -2141,8 +2143,9 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
     },
     handelBulb: function handelBulb(data) {
       if (this.socketPayloadContainsKey(data.payload, "light_is_on")) {
+        var light_before = this.light_is_on;
         this.light_is_on = data.payload.light_is_on;
-        this.light_is_on ? this.notify("Light is ON") : this.warning("Light is Off");
+        if (light_before != this.light_is_on) if (this.light_is_on) this.notify("Light is ON");else this.warning("Light is Off");
       }
     },
     handelTemprature: function handelTemprature(data) {
@@ -2152,9 +2155,10 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
     },
     handelHeartBeat: function handelHeartBeat(data) {
       if (this.socketPayloadContainsKey(data.payload, "bpm_value")) {
+        var bpm_before = this.bpm_value;
         this.bpm_value = data.payload.bpm_value;
         this.bpm_value == 0 ? this.heart_stop = true : this.heart_stop = false;
-        if (this.bpm_value == 0) this.error("Heart is Stopped!!!!");
+        if (this.bpm_value != bpm_before && this.bpm_value == 0) this.error("Heart is Stopped!!!!");
       }
     },
     socketPayloadContainsKey: function socketPayloadContainsKey(payload, key) {
@@ -48410,7 +48414,7 @@ var render = function() {
     _c("div", { staticClass: "row justify-content-center" }, [
       _c("div", { staticClass: "col-md-12" }, [
         _c("div", { staticClass: "form-group" }, [
-          _vm.authorization_state == false
+          !_vm.authorized
             ? _c("div", [
                 _vm.passwordFieldType === "checkbox"
                   ? _c("input", {
@@ -48626,106 +48630,116 @@ var render = function() {
     _vm._v(" "),
     _c("hr"),
     _vm._v(" "),
-    _c("div", { staticClass: "row justify-content-center" }, [
-      _c(
-        "div",
-        { staticClass: "col-md-4" },
-        [
-          _c("Lightbulb", { attrs: { isOn: _vm.light_is_on } }),
-          _vm._v(" "),
-          _c(
-            "div",
-            [
-              _c("RockerSwitch", {
-                attrs: { size: 0.9, value: _vm.light_is_on },
-                on: {
-                  change: function(isOn) {
-                    return (_vm.light_is_on = isOn)
-                  }
-                }
-              })
-            ],
-            1
-          )
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "div",
-        { staticClass: "col-md-4" },
-        [
-          _c("vue-thermometer", {
-            attrs: { value: _vm.temperature_value, min: -20, max: 25 }
-          })
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "div",
-        { staticClass: "col-md-4" },
-        [
-          _c("heart", {
-            attrs: { bpm_value: _vm.bpm_value, heart_stop: _vm.heart_stop }
-          })
-        ],
-        1
-      )
-    ]),
-    _vm._v(" "),
-    _c("hr"),
-    _vm._v(" "),
-    _c("div", { staticClass: "row" }, [
-      _c("div", { staticClass: "col-md-8" }, [
-        _c("table", { staticClass: "leading-normal socket_table" }, [
-          _vm._m(0),
-          _vm._v(" "),
-          _c(
-            "tbody",
-            { attrs: { id: "device_data" } },
-            _vm._l(_vm.socket_data.slice().reverse(), function(data) {
-              return _c("tr", { key: data.id }, [
-                _c(
-                  "td",
-                  {
-                    staticClass:
-                      "px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5"
-                  },
-                  [
-                    _c("tree-view", {
-                      attrs: { data: data.payload, options: { maxDepth: 10 } }
-                    })
-                  ],
-                  1
-                ),
+    _vm.authorized
+      ? _c("div", [
+          _c("div", { staticClass: "row justify-content-center" }, [
+            _c(
+              "div",
+              { staticClass: "col-md-4" },
+              [
+                _c("Lightbulb", { attrs: { isOn: _vm.light_is_on } }),
                 _vm._v(" "),
                 _c(
-                  "td",
-                  {
-                    staticClass:
-                      "px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5"
-                  },
+                  "div",
                   [
-                    _c("time-ago", {
-                      attrs: {
-                        datetime: data.created_at,
-                        refresh: 1,
-                        locale: _vm.en,
-                        tooltip: true,
-                        long: false
+                    _c("RockerSwitch", {
+                      attrs: { size: 0.9, value: _vm.light_is_on },
+                      on: {
+                        change: function(isOn) {
+                          return (_vm.light_is_on = isOn)
+                        }
                       }
                     })
                   ],
                   1
                 )
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "col-md-4" },
+              [
+                _c("vue-thermometer", {
+                  attrs: { value: _vm.temperature_value, min: -20, max: 25 }
+                })
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "col-md-4" },
+              [
+                _c("heart", {
+                  attrs: {
+                    bpm_value: _vm.bpm_value,
+                    heart_stop: _vm.heart_stop
+                  }
+                })
+              ],
+              1
+            )
+          ]),
+          _vm._v(" "),
+          _c("hr"),
+          _vm._v(" "),
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-md-8" }, [
+              _c("table", { staticClass: "leading-normal socket_table" }, [
+                _vm._m(0),
+                _vm._v(" "),
+                _c(
+                  "tbody",
+                  { attrs: { id: "device_data" } },
+                  _vm._l(_vm.socket_data.slice().reverse(), function(data) {
+                    return _c("tr", { key: data.id }, [
+                      _c(
+                        "td",
+                        {
+                          staticClass:
+                            "px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5"
+                        },
+                        [
+                          _c("tree-view", {
+                            attrs: {
+                              data: data.payload,
+                              options: { maxDepth: 10 }
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "td",
+                        {
+                          staticClass:
+                            "px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5"
+                        },
+                        [
+                          _c("time-ago", {
+                            attrs: {
+                              datetime: data.created_at,
+                              refresh: 1,
+                              locale: _vm.en,
+                              tooltip: true,
+                              long: false
+                            }
+                          })
+                        ],
+                        1
+                      )
+                    ])
+                  }),
+                  0
+                )
               ])
-            }),
-            0
-          )
+            ])
+          ])
         ])
-      ])
-    ])
+      : _vm._e()
   ])
 }
 var staticRenderFns = [
@@ -48743,7 +48757,7 @@ var staticRenderFns = [
           },
           [
             _vm._v(
-              "\n                                Payload\n                            "
+              "\n                                    Payload\n                                "
             )
           ]
         ),
@@ -48756,7 +48770,7 @@ var staticRenderFns = [
           },
           [
             _vm._v(
-              "\n                                Created At\n                            "
+              "\n                                    Created At\n                                "
             )
           ]
         )

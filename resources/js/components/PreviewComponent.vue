@@ -3,7 +3,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="form-group">
-                <div v-if="authorization_state == false">
+                <div v-if="!authorized">
                     <input class="form-control" placeholder="enter device public key" :type="passwordFieldType" v-model="public_key" />
 
                     <br>
@@ -23,58 +23,60 @@
         </div>
     </div>
     <hr/>
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <Lightbulb :isOn="light_is_on"/>
-            <div>
-                <RockerSwitch :size="0.9" :value="light_is_on" @change="isOn => (light_is_on = isOn)"/>
+     <div v-if="authorized">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <Lightbulb :isOn="light_is_on"/>
+                <div>
+                    <RockerSwitch :size="0.9" :value="light_is_on" @change="isOn => (light_is_on = isOn)"/>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <vue-thermometer
+                    :value="temperature_value"
+                    :min="-20"
+                    :max="25"
+                />
+            </div>
+            <div class="col-md-4">
+                <heart
+                    :bpm_value="bpm_value"
+                    :heart_stop="heart_stop"
+                />
             </div>
         </div>
-        <div class="col-md-4">
-            <vue-thermometer
-                :value="temperature_value"
-                :min="-20"
-                :max="25"
-            />
-        </div>
-        <div class="col-md-4">
-            <heart
-                :bpm_value="bpm_value"
-                :heart_stop="heart_stop"
-            />
-        </div>
-    </div>
-    <hr/>
-    <div class="row">
-        <div class="col-md-8">
-            <table class="leading-normal socket_table">
-                    <thead>
-                        <tr>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Payload
-                            </th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Created At
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="device_data">
-                        <tr v-for="(data) in socket_data.slice().reverse()" :key="data.id">
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                <tree-view :data="data.payload" :options="{maxDepth: 10}"></tree-view>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                <time-ago
-                                    :datetime="data.created_at"
-                                    :refresh="1"
-                                    :locale="en"
-                                    :tooltip="true"
-                                    :long="false"
-                                />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <hr/>
+        <div class="row">
+            <div class="col-md-8">
+                <table class="leading-normal socket_table">
+                        <thead>
+                            <tr>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Payload
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Created At
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="device_data">
+                            <tr v-for="(data) in socket_data.slice().reverse()" :key="data.id">
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
+                                    <tree-view :data="data.payload" :options="{maxDepth: 10}"></tree-view>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
+                                    <time-ago
+                                        :datetime="data.created_at"
+                                        :refresh="1"
+                                        :locale="en"
+                                        :tooltip="true"
+                                        :long="false"
+                                    />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+            </div>
         </div>
     </div>
 </div>
@@ -108,7 +110,8 @@ Vue.use(Toast, {
     rtl: false,
     position: "bottom-right",
     timeout: 3048,
-});Vue.use(TreeView)
+});
+Vue.use(TreeView)
 import Lightbulb from "./Lightbulb";
 import heart from "./heart";
 import RockerSwitch from "vue-rocker-switch";
@@ -135,7 +138,7 @@ export default {
             socket_data: [],
             device_token: null,
             device_id: null,
-            authorization_state: false,
+            authorized: false,
             public_key: "",
             private_key: "",
             passwordFieldType: 'password',
@@ -218,12 +221,12 @@ export default {
                                             .then((response) => {
                                                 console.log(response);
                                                 this.msg("success", "Connected")
-                                                this.authorization_state = true;
+                                                this.authorized = true;
                                                 callback(false, response.data);
                                             })
                                             .catch((error) => {
                                                 console.log(error);
-                                                this.authorization_state = false;
+                                                this.authorized = false;
                                                 this.msg("error", "Failed To Connect")
                                                 callback(true, error);
                                             });
@@ -251,8 +254,13 @@ export default {
         },
         handelBulb : function(data){
             if(this.socketPayloadContainsKey(data.payload , "light_is_on")){
+                let light_before = this.light_is_on;
                 this.light_is_on = data.payload.light_is_on;
-                this.light_is_on  ? this.notify("Light is ON") : this.warning("Light is Off")
+                if(light_before != this.light_is_on)
+                    if(this.light_is_on)
+                        this.notify("Light is ON")
+                    else
+                        this.warning("Light is Off")
             }
         },
         handelTemprature : function(data){
@@ -262,9 +270,11 @@ export default {
         },
         handelHeartBeat : function(data){
             if(this.socketPayloadContainsKey(data.payload , "bpm_value")){
+                let bpm_before = this.bpm_value;
                 this.bpm_value = data.payload.bpm_value;
                 this.bpm_value == 0 ? this.heart_stop = true : this.heart_stop = false;
-                if(this.bpm_value == 0 ) this.error("Heart is Stopped!!!!");
+                if(this.bpm_value != bpm_before && this.bpm_value == 0 )
+                    this.error("Heart is Stopped!!!!")
             }
         },
         socketPayloadContainsKey(payload,key) {
