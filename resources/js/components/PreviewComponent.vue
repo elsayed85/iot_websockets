@@ -3,54 +3,26 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="form-group">
-                <input class="form-control" placeholder="enter device public key" :type="passwordFieldType" v-model="public_key" />
+                <div v-if="authorization_state == false">
+                    <input class="form-control" placeholder="enter device public key" :type="passwordFieldType" v-model="public_key" />
 
-                <br>
+                    <br>
 
-                <input class="form-control" placeholder="enter device private key" :type="passwordFieldType" v-model="private_key"/>
+                    <input class="form-control" placeholder="enter device private key" :type="passwordFieldType" v-model="private_key"/>
 
-                <br>
+                    <br>
 
-                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" type="password" @click="switchVisibility">show / hide</button>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" type="password" @click="switchVisibility">show / hide</button>
 
-                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" @click="socketConnect">Connect</button>
-
-                <br />
-                <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
-                    <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
-                        <table class="min-w-full leading-normal socket_table">
-                            <thead>
-                                <tr>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Device ID
-                                    </th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Payload
-                                    </th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Created At
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="device_data">
-                                <tr v-for="(data) in socket_data.slice().reverse()" :key="data.id">
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                        {{ data.device_id }}
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                          <tree-view :data="data.payload" :options="{maxDepth: 10}"></tree-view>
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
-                                        {{ data.created_at }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" @click="socketConnect">Connect</button>
+                </div>
+                <div v-else>
+                    Device <b><mark>{{ device_id }}</mark></b> is connected now :)
                 </div>
             </div>
         </div>
     </div>
+    <hr/>
     <div class="row justify-content-center">
         <div class="col-md-4">
             <Lightbulb :isOn="light_is_on"/>
@@ -72,6 +44,39 @@
             />
         </div>
     </div>
+    <hr/>
+    <div class="row">
+        <div class="col-md-8">
+            <table class="leading-normal socket_table">
+                    <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Payload
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Created At
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="device_data">
+                        <tr v-for="(data) in socket_data.slice().reverse()" :key="data.id">
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
+                                <tree-view :data="data.payload" :options="{maxDepth: 10}"></tree-view>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm w-2/5">
+                                <time-ago
+                                    :datetime="data.created_at"
+                                    :refresh="1"
+                                    :locale="en"
+                                    :tooltip="true"
+                                    :long="false"
+                                />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+        </div>
+    </div>
 </div>
 </template>
 <style >
@@ -82,10 +87,28 @@
     }
 </style>
 <script>
+import Vue from "vue";
+import TimeAgo from "vue2-timeago";
 import TreeView from "vue-json-tree-view";
-import Notifications from 'vue-notification'
-Vue.use(Notifications)
-Vue.use(TreeView)
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
+Vue.use(Toast, {
+    transition: "Vue-Toastification__bounce",
+    maxToasts: 30,
+    newestOnTop: true,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+    showCloseButtonOnHover: true,
+    hideProgressBar: true,
+    closeButton: "button",
+    icon: true,
+    rtl: false,
+    position: "bottom-right",
+    timeout: 3048,
+});Vue.use(TreeView)
 import Lightbulb from "./Lightbulb";
 import heart from "./heart";
 import RockerSwitch from "vue-rocker-switch";
@@ -95,11 +118,13 @@ import Echo from "laravel-echo";
 import Heart from './heart.vue';
 window.Pusher = require("pusher-js");
 
+
 export default {
     components: {
     RockerSwitch,
     Lightbulb,
-    Heart
+    Heart,
+    TimeAgo
     },
     data() {
         return {
@@ -143,73 +168,81 @@ export default {
                 text: message
             })
         },
+        notify : function(msg){
+            this.$toast.success(msg, {
+            });
+        },
+        error : function(msg){
+            this.$toast.error(msg, {
+            });
+        },
+        warning : function(msg){
+            this.$toast.warning(msg, {
+            });
+        },
         authorize: function () {
-            axios
-                .post("/iot/v1/login", {
-                    public_key: this.public_key,
-                    private_key: this.private_key,
-                })
-                .then(({
-                    data
-                }) => {
-                    this.device_token = data.token;
-                    this.device_id = data.device_id;
-                    window.localECHO = new Echo({
-                        broadcaster: "pusher",
-                        key: process.env.MIX_PUSHER_APP_KEY,
-                        cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-                        forceTLS: false,
-                        wsHost: window.location.hostname,
-                        wsPort: 6001,
-                        disableStats: true,
-                        authorizer: (channel, options) => {
-                            console.log(options, channel);
-                            return {
-                                authorize: (socketId, callback) => {
-                                    axios({
-                                            method: "POST",
-                                            url: "/api/broadcasting/auth",
-                                            headers: {
-                                                Authorization: `Bearer ${this.device_token}`,
-                                            },
-                                            data: {
-                                                socket_id: socketId,
-                                                channel_name: channel.name,
-                                            },
-                                        })
-                                        .then((response) => {
-                                            console.log(response);
-                                            this.msg("success", "Connected")
-                                            this.authorization_state = true;
-                                            callback(false, response.data);
-                                        })
-                                        .catch((error) => {
-                                            console.log(error);
-                                            this.authorization_state = false;
-                                            this.msg("error", "Failed To Connect")
-                                            callback(true, error);
-                                        });
-                                },
-                            };
-                        },
+            axios.get('/sanctum/csrf-cookie').then(response => {
+                axios
+                    .post("/iot/v1/login", {
+                        public_key: this.public_key,
+                        private_key: this.private_key,
+                    })
+                    .then(({
+                        data
+                    }) => {
+                        this.device_token = data.token;
+                        this.device_id = data.device_id;
+                        window.localECHO = new Echo({
+                            broadcaster: "pusher",
+                            key: process.env.MIX_PUSHER_APP_KEY,
+                            cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+                            forceTLS: false,
+                            wsHost: window.location.hostname,
+                            wsPort: 6001,
+                            disableStats: true,
+                            authorizer: (channel, options) => {
+                                console.log(options, channel);
+                                return {
+                                    authorize: (socketId, callback) => {
+                                        axios({
+                                                method: "POST",
+                                                url: "/api/broadcasting/auth",
+                                                headers: {
+                                                    Authorization: `Bearer ${this.device_token}`,
+                                                },
+                                                data: {
+                                                    socket_id: socketId,
+                                                    channel_name: channel.name,
+                                                },
+                                            })
+                                            .then((response) => {
+                                                console.log(response);
+                                                this.msg("success", "Connected")
+                                                this.authorization_state = true;
+                                                callback(false, response.data);
+                                            })
+                                            .catch((error) => {
+                                                console.log(error);
+                                                this.authorization_state = false;
+                                                this.msg("error", "Failed To Connect")
+                                                callback(true, error);
+                                            });
+                                    },
+                                };
+                            },
+                        });
+                        localECHO.private(`App.Device.${this.device_id}`)
+                            .listen(
+                                ".send_data_event",
+                                (e) => {
+                                    this.socket_data.push(e);
+                                    this.handelResposne(e)
+                                }
+                            );
+                    }).catch((error) => {
+                        this.msg("error", "Failed To Connect")
                     });
-                    localECHO.private(`App.Device.${this.device_id}`)
-                        .listen(
-                            ".send_data_event",
-                            (e) => {
-                                Vue.notify({
-                                    group: 'foretretytuytiuo',
-                                    clean: true,
-                                    title: "new message!!",
-                                    text: "device #" + this.device_id
-                                });
-                                this.socket_data.push(e);
-                                this.handelResposne(e)
-                            }
-                        );
-                }).catch((error) => {
-                    this.msg("error", "Failed To Connect")
-                });
+            });
         },
         handelResposne : function(e){
             this.handelBulb(e)
@@ -219,6 +252,7 @@ export default {
         handelBulb : function(data){
             if(this.socketPayloadContainsKey(data.payload , "light_is_on")){
                 this.light_is_on = data.payload.light_is_on;
+                this.light_is_on  ? this.notify("Light is ON") : this.warning("Light is Off")
             }
         },
         handelTemprature : function(data){
@@ -230,6 +264,7 @@ export default {
             if(this.socketPayloadContainsKey(data.payload , "bpm_value")){
                 this.bpm_value = data.payload.bpm_value;
                 this.bpm_value == 0 ? this.heart_stop = true : this.heart_stop = false;
+                if(this.bpm_value == 0 ) this.error("Heart is Stopped!!!!");
             }
         },
         socketPayloadContainsKey(payload,key) {

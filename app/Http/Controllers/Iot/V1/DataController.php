@@ -15,6 +15,13 @@ class DataController extends Controller
     {
         $device = $request->user();
         $payload = json_decode($request->payload);
+        if(!$payload){
+              $payload = [
+                  'bpm_value' => rand(10,90),
+                  'temperature_value' => rand(-20 , 25),
+                  'light_is_on' => collect([true , false])->random()
+              ];
+        }
         event((new SendPayloadEvent($device->id, $payload)));
         return response()->json([
             'device' => $device->id,

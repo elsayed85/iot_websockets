@@ -24,8 +24,8 @@ class LoginRequest extends FormRequest
     public function rules()
     {
         return [
-            "private_key" => ['required' , 'string' , 'min:3'],
-            "public_key" => ['required' , 'string' , 'min:3' , 'exists:iot_devices,public_key'],
+            "private_key" => ['required' , 'string' , 'min:1'],
+            "public_key" => ['required' , 'string' , 'min:1' , 'exists:iot_devices,public_key'],
         ];
     }
 }

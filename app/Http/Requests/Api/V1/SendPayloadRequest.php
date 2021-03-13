@@ -24,7 +24,7 @@ class SendPayloadRequest extends FormRequest
     public function rules()
     {
         return [
-            "payload" => ['required', 'json']
+            "payload" => ['sometimes', 'json']
         ];
     }
 }
