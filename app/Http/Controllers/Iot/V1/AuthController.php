@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\IOT\V1\Auth;
+namespace App\Http\Controllers\Iot\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
-use App\Http\Resources\Api\V1\Patient\LoginResource;
 use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-class LoginController extends Controller
+class AuthController extends Controller
 {
     public function login(LoginRequest $request)
     {
@@ -23,5 +22,11 @@ class LoginController extends Controller
         }
 
         return response()->json((["token" => $device->createToken($device->name)->plainTextToken, 'device_id' => $device->id]));
+    }
+
+    public function logout()
+    {
+        auth()->user("device")->tokens()->where('id', auth()->user("device")->currentAccessToken()->id)->delete();
+        return response()->noContent();
     }
 }

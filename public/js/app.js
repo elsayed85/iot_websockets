@@ -1982,6 +1982,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 
 
@@ -2013,6 +2015,23 @@ vue__WEBPACK_IMPORTED_MODULE_4__.default.use((vue_json_tree_view__WEBPACK_IMPORT
 
 
 window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/dist/web/pusher.js");
+
+function initialState() {
+  return {
+    light_is_on: false,
+    bpm_value: 0,
+    heart_stop: true,
+    temperature_value: 0,
+    socket_data: [],
+    device_token: null,
+    device_id: null,
+    authorized: false,
+    public_key: "",
+    private_key: "",
+    passwordFieldType: 'password'
+  };
+}
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
     RockerSwitch: (vue_rocker_switch__WEBPACK_IMPORTED_MODULE_7___default()),
@@ -2021,19 +2040,7 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
     TimeAgo: vue2_timeago__WEBPACK_IMPORTED_MODULE_0__.default
   },
   data: function data() {
-    return {
-      light_is_on: false,
-      bpm_value: 0,
-      heart_stop: true,
-      temperature_value: 0,
-      socket_data: [],
-      device_token: null,
-      device_id: null,
-      authorized: false,
-      public_key: "",
-      private_key: "",
-      passwordFieldType: 'password'
-    };
+    return initialState();
   },
   watch: {//
   },
@@ -2047,6 +2054,21 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
   methods: {
     socketConnect: function socketConnect() {
       this.authorize();
+    },
+    logout: function logout() {
+      var _this = this;
+
+      axios({
+        method: "POST",
+        url: "/iot/v1/logout",
+        headers: {
+          Authorization: "Bearer ".concat(this.device_token)
+        }
+      }).then(function (response) {
+        Object.assign(_this.$data, initialState());
+      })["catch"](function (error) {
+        console.log(error);
+      });
     },
     switchVisibility: function switchVisibility() {
       this.passwordFieldType = this.passwordFieldType === 'password' ? 'text' : 'password';
@@ -2075,16 +2097,16 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
       this.$toast.warning(msg, {});
     },
     authorize: function authorize() {
-      var _this = this;
+      var _this2 = this;
 
       axios.get('/sanctum/csrf-cookie').then(function (response) {
         axios.post("/iot/v1/login", {
-          public_key: _this.public_key,
-          private_key: _this.private_key
+          public_key: _this2.public_key,
+          private_key: _this2.private_key
         }).then(function (_ref) {
           var data = _ref.data;
-          _this.device_token = data.token;
-          _this.device_id = data.device_id;
+          _this2.device_token = data.token;
+          _this2.device_id = data.device_id;
           window.localECHO = new laravel_echo__WEBPACK_IMPORTED_MODULE_10__.default({
             broadcaster: "pusher",
             key: "f6a8426a0df0cede4947",
@@ -2101,7 +2123,7 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
                     method: "POST",
                     url: "/api/broadcasting/auth",
                     headers: {
-                      Authorization: "Bearer ".concat(_this.device_token)
+                      Authorization: "Bearer ".concat(_this2.device_token)
                     },
                     data: {
                       socket_id: socketId,
@@ -2110,15 +2132,15 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
                   }).then(function (response) {
                     console.log(response);
 
-                    _this.msg("success", "Connected");
+                    _this2.msg("success", "Connected");
 
-                    _this.authorized = true;
+                    _this2.authorized = true;
                     callback(false, response.data);
                   })["catch"](function (error) {
                     console.log(error);
-                    _this.authorized = false;
+                    _this2.authorized = false;
 
-                    _this.msg("error", "Failed To Connect");
+                    _this2.msg("error", "Failed To Connect");
 
                     callback(true, error);
                   });
@@ -2126,13 +2148,13 @@ window.Pusher = __webpack_require__(/*! pusher-js */ "./node_modules/pusher-js/d
               };
             }
           });
-          localECHO["private"]("App.Device.".concat(_this.device_id)).listen(".send_data_event", function (e) {
-            _this.socket_data.push(e);
+          localECHO["private"]("App.Device.".concat(_this2.device_id)).listen(".send_data_event", function (e) {
+            _this2.socket_data.push(e);
 
-            _this.handelResposne(e);
+            _this2.handelResposne(e);
           });
         })["catch"](function (error) {
-          _this.msg("error", "Failed To Connect");
+          _this2.msg("error", "Failed To Connect");
         });
       });
     },
@@ -48622,7 +48644,18 @@ var render = function() {
             : _c("div", [
                 _vm._v("\n                    Device "),
                 _c("b", [_c("mark", [_vm._v(_vm._s(_vm.device_id))])]),
-                _vm._v(" is connected now :)\n                ")
+                _vm._v(" is connected now :)\n                    "),
+                _c("br"),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass:
+                      "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center",
+                    on: { click: _vm.logout }
+                  },
+                  [_vm._v("logout")]
+                )
               ])
         ])
       ])

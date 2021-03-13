@@ -123,6 +123,21 @@ import Echo from "laravel-echo";
 import Heart from './heart.vue';
 window.Pusher = require("pusher-js");
 
+function initialState (){
+  return {
+        light_is_on: false,
+        bpm_value : 0,
+        heart_stop : true,
+        temperature_value : 0,
+        socket_data: [],
+        device_token: null,
+        device_id: null,
+        authorized: false,
+        public_key: "",
+        private_key: "",
+        passwordFieldType: 'password',
+    }
+}
 
 export default {
     components: {
@@ -132,19 +147,7 @@ export default {
     TimeAgo
     },
     data() {
-        return {
-            light_is_on: false,
-            bpm_value : 0,
-            heart_stop : true,
-            temperature_value : 0,
-            socket_data: [],
-            device_token: null,
-            device_id: null,
-            authorized: false,
-            public_key: "",
-            private_key: "",
-            passwordFieldType: 'password',
-        };
+        return initialState();
     },
     watch: {
         //
@@ -157,6 +160,21 @@ export default {
     methods: {
         socketConnect: function () {
             this.authorize();
+        },
+        logout :  function(){
+             axios({
+                    method: "POST",
+                    url: "/iot/v1/logout",
+                    headers: {
+                        Authorization: `Bearer ${this.device_token}`,
+                    }
+                })
+                .then((response) => {
+                    Object.assign(this.$data, initialState());
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
         },
         switchVisibility() {
             this.passwordFieldType = this.passwordFieldType === 'password' ? 'text' : 'password'
