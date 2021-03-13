@@ -18,6 +18,8 @@
                 </div>
                 <div v-else>
                     Device <b><mark>{{ device_id }}</mark></b> is connected now :)
+                    <br>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" @click="logout">logout</button>
                 </div>
             </div>
         </div>
