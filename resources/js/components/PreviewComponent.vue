@@ -12,7 +12,9 @@
 
                     <br>
 
-                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" type="password" @click="switchVisibility">show / hide</button>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" type="password" @click="switchVisibility">
+                        show / hide
+                    </button>
 
                     <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" @click="socketConnect">Connect</button>
                 </div>
@@ -20,6 +22,7 @@
                     Device <b><mark>{{ device_id }}</mark></b> is connected now :)
                     <br>
                     <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center" @click="logout">logout</button>
+
                 </div>
             </div>
         </div>
@@ -209,7 +212,7 @@ export default {
                     .post("/iot/v1/login", {
                         public_key: this.public_key,
                         private_key: this.private_key,
-                    })
+                    } , {withCredentials: true})
                     .then(({
                         data
                     }) => {
@@ -223,6 +226,7 @@ export default {
                             wsHost: window.location.hostname,
                             wsPort: 6001,
                             disableStats: true,
+                            enabledTransports: ['ws', 'wss'], // <- added this param
                             authorizer: (channel, options) => {
                                 console.log(options, channel);
                                 return {

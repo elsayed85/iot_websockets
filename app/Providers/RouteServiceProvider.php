@@ -29,6 +29,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     // protected $namespace = 'App\\Http\\Controllers';
     protected $apiNamespace = 'App\Http\Controllers\Iot';
+    protected $pythonNamespace = 'App\Http\Controllers\Python';
 
     /**
      * Define your route model bindings, pattern filters, etc.
@@ -53,8 +54,17 @@ class RouteServiceProvider extends ServiceProvider
                 'middleware' => ['enforceJson', 'api', 'api_version:v1'],
                 'namespace'  => "{$this->apiNamespace}\V1",
                 'prefix'     => 'iot/v1',
+                'as' => 'api_v1.'
             ], function ($router) {
                 require base_path('routes/Iot/v1.php');
+            });
+
+            Route::group([
+                'namespace'  => "{$this->pythonNamespace}",
+                'prefix'     => 'python',
+                'as' => 'python.'
+            ], function ($router) {
+                require base_path('routes/python.php');
             });
         });
     }

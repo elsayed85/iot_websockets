@@ -1,15 +1,17 @@
 <?php
 
+use App\python\LaravelPython;
 use App\WebSocket\WebSocketHandler;
-use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 use Illuminate\Support\Facades\Route;
-
+use Symfony\Component\Process\Process;
 
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::middleware(['auth:sanctum', 'verified'])
+    ->get('/dashboard', function () {
+        return view('dashboard');
+    })
+    ->name('dashboard');

@@ -3,7 +3,6 @@
 use App\Models\Device;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------

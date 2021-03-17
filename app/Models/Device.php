@@ -5,7 +5,6 @@ namespace App\Models;
 use GoldSpecDigital\LaravelEloquentUUID\Database\Eloquent\Uuid;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -60,6 +59,10 @@ class Device extends Authenticatable
         'private_key',
     ];
 
+
+    /**
+     * @return mixed|string
+     */
     public function getAuthPassword()
     {
         return $this->private_key;

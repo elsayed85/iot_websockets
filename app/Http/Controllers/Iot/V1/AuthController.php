@@ -11,6 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /**
+     * @param LoginRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws ValidationException
+     */
     public function login(LoginRequest $request)
     {
         $device = Device::where('public_key', $request->public_key)->first();
@@ -21,9 +26,14 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json((["token" => $device->createToken($device->name)->plainTextToken, 'device_id' => $device->id]));
+        $token = $device->createToken($device->name)->plainTextToken;
+
+        return response()->json((["token" => $token, 'device_id' => $device->id]));
     }
 
+    /**
+     * @return \Illuminate\Http\Response
+     */
     public function logout()
     {
         auth()->user("device")->tokens()->where('id', auth()->user("device")->currentAccessToken()->id)->delete();

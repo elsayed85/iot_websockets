@@ -1984,6 +1984,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 
 
@@ -2103,6 +2106,8 @@ function initialState() {
         axios.post("/iot/v1/login", {
           public_key: _this2.public_key,
           private_key: _this2.private_key
+        }, {
+          withCredentials: true
         }).then(function (_ref) {
           var data = _ref.data;
           _this2.device_token = data.token;
@@ -2115,6 +2120,8 @@ function initialState() {
             wsHost: window.location.hostname,
             wsPort: 6001,
             disableStats: true,
+            enabledTransports: ['ws', 'wss'],
+            // <- added this param
             authorizer: function authorizer(channel, options) {
               console.log(options, channel);
               return {
@@ -48628,7 +48635,11 @@ var render = function() {
                     attrs: { type: "password" },
                     on: { click: _vm.switchVisibility }
                   },
-                  [_vm._v("show / hide")]
+                  [
+                    _vm._v(
+                      "\n                        show / hide\n                    "
+                    )
+                  ]
                 ),
                 _vm._v(" "),
                 _c(
